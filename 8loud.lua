@@ -102,6 +102,57 @@ function RUN(w,h)
   end
 end
 
-RUN(24,5)
+-- RUN(24,5)
 
+game = {}
+function game:init(w,h)
+  self.playground = CELLS(w,h)
+  write("\027[2J")      -- ANSI clear screen
+end
 
+function game:step()
+  while 1 do
+    write("\027[2J")      -- ANSI clear screen
+    write("\027[H")     -- ANSI home cursor
+    self.playground:draw()
+    write("mem ", string.format("%3.1f",collectgarbage('count')), " kB\n")
+    write("ARRAY", #self.playground[1], "\n")
+    key = kb.getch()
+    if key == 49 then
+      break
+    elseif key == 50 then
+      self.playground:move_on(1)
+    else
+      self.playground:move_on(0)
+    end
+  end
+end
+
+function game:run()
+local K = require 'readkey'
+local P = require 'posix'
+local socket = require("socket")        -- for sleep(0.1)
+local tty = io.open(P.ctermid(), 'a+')  -- the controlling terminal
+K.ReadMode( 4, tty )                    -- turn off controls keys
+local key
+while true do
+     key = K.ReadKey( -1, tty )
+     if key == '1' or key == '\027' then break end
+    write("\027[2J")      -- ANSI clear screen
+    write("\027[H")     -- ANSI home cursor
+    self.playground:draw()
+    write("mem ", string.format("%3.1f",collectgarbage('count')), " kB\n")
+    write("ARRAY", #self.playground[1], "\n")
+    if key == 49 then
+      self.playground:move_on(1)
+    else
+      self.playground:move_on(0)
+    end
+     socket.sleep(0.1)
+end
+print("You pressed key: "..key)
+K.ReadMode( 0, tty )                    -- reset tty mode before exiting
+end
+
+game:init(24,5)
+game:run()
