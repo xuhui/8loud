@@ -3,8 +3,10 @@ require 'kb'
 
 local write=io.write
 
-LIGHT_ON="[]"
-LIGHT_OFF="--"
+GROUND="[]"
+SPACE="--"
+JUMPER="@@"
+
 
 function ARRAY2D(w,h)
   local t = {w=w,h=h}
@@ -21,9 +23,16 @@ _CELLS = {}
 
 -- run the CA and produce the next generation
 function _CELLS:move_on(next)
-  for y=1,self.h do
-    table.remove(self[y], 1)
-    table.insert(self[y], #self[y] + 1, next)
+--  for y=1,self.h do
+--    table.remove(self[y], 1)
+--    table.insert(self[y], #self[y] + 1, next)
+--  end
+  table.remove(self[#self], 1)
+  if self.hole > 0 then
+    table.insert(self[#self], #self[#self] + 1, 0)
+    self.hole = self.hole - 1
+  else
+    table.insert(self[#self], #self[#self] + 1, 1)
   end
 end
 
@@ -31,12 +40,20 @@ end
 function _CELLS:draw()
   local out="" -- accumulate to reduce flicker
   for y=1,self.h do
-   for x=1,self.w do
-      out=out..(((self[y][x]>0) and LIGHT_ON) or LIGHT_OFF)
+    for x=1,self.w do
+      if x == self.jumper.x and y == self.jumper.y then
+        out=out..JUMPER
+      else
+        out=out..(((self[y][x]>0) and GROUND) or SPACE)
+      end
     end
     out=out.."\n"
   end
   write(out)
+end
+
+function _CELLS:add_hole(size)
+  self.hole = size
 end
 
 -- constructor
@@ -44,6 +61,9 @@ function CELLS(w,h)
   local c = ARRAY2D(w,h)
   c.move_on = _CELLS.move_on
   c.draw = _CELLS.draw
+  c.hole = 0
+  c.add_hole = _CELLS.add_hole
+  c.jumper = {x=2, y=2}
   return c
 end
 
@@ -66,6 +86,8 @@ function RUN(w,h)
       break
     elseif key == 50 then
       screen:move_on(1)
+    elseif key == 51 then
+      screen:add_hole(3)
     else
       screen:move_on(0)
     end
