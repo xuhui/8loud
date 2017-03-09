@@ -1,3 +1,7 @@
+-- energy =  0 stay, not to move
+-- energy =  1 work, move + 1; energy - 1; if energy = 0 then high -1;
+-- energy >= 2 jump, move + 1; high + 1(if possible), energy - 1;
+
 
 require 'kb'
 
@@ -21,18 +25,28 @@ end
 
 _CELLS = {}
 
--- run the CA and produce the next generation
 function _CELLS:move_on(next)
 --  for y=1,self.h do
 --    table.remove(self[y], 1)
 --    table.insert(self[y], #self[y] + 1, next)
 --  end
-  table.remove(self[#self], 1)
+  local ground_line = self.h  -- #self
+  table.remove(self[ground_line], 1)
   if self.hole > 0 then
-    table.insert(self[#self], #self[#self] + 1, 0)
+    table.insert(self[ground_line], #self[ground_line] + 1, 0)
     self.hole = self.hole - 1
   else
-    table.insert(self[#self], #self[#self] + 1, 1)
+    table.insert(self[ground_line], #self[ground_line] + 1, 1)
+    local ground_completeness = 0
+    for x=self.w,1,-1 do
+      if self[ground_line][x] == 0 then
+        break
+      end
+      ground_completeness = ground_completeness + self[ground_line][x];
+    end
+    if ground_completeness > 15 then
+      self.hole = math.random(1,10)
+    end
   end
 end
 
@@ -50,10 +64,6 @@ function _CELLS:draw()
     out=out.."\n"
   end
   write(out)
-end
-
-function _CELLS:add_hole(size)
-  self.hole = size
 end
 
 -- constructor
@@ -86,8 +96,6 @@ function RUN(w,h)
       break
     elseif key == 50 then
       screen:move_on(1)
-    elseif key == 51 then
-      screen:add_hole(3)
     else
       screen:move_on(0)
     end
